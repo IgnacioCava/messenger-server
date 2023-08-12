@@ -9,7 +9,7 @@ const typeDefs = `#graphql
     }
 
     type Mutation {
-        createUsername(username: String): CreateUsernameResponse
+        createUsername(username: String!): CreateUsernameResponse
     }
 
     type CreateUsernameResponse {
