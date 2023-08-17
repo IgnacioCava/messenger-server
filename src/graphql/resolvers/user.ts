@@ -1,17 +1,39 @@
 import { GraphQLContext } from '../util/types'
-import { CreateUsernameResponse } from '../util/types'
+import { CreateUsernameResponse, SearchUsersResponse } from '../util/types'
+import { GraphQLError } from 'graphql'
 
 const resolvers = {
 	Query: {
-		searchUsers: () => {
-			return []
+		searchUsers: async (_: unknown, args: { username: string }, context: GraphQLContext): Promise<SearchUsersResponse> => {
+			try {
+				const { username } = args
+				const { session, prisma } = context
+				if (!session) throw { message: 'Not authorized' }
+				if (!username) throw { message: 'Missing username field' }
+
+				const { username: currentUser } = session
+
+				const users = await prisma.user.findMany({
+					where: {
+						username: {
+							contains: username,
+							not: currentUser,
+							mode: 'insensitive'
+						}
+					}
+				})
+
+				return users
+			} catch (error) {
+				throw new GraphQLError(error?.message)
+			}
 		}
 	},
 	Mutation: {
 		createUsername: async (_: unknown, args: { username: string }, context: GraphQLContext): Promise<CreateUsernameResponse> => {
-			const { prisma, user } = context
+			const { prisma, session } = context
 
-			if (!user) throw { message: 'Not authorized' }
+			if (!session) throw { message: 'Not authorized' }
 
 			try {
 				/**
@@ -22,7 +44,7 @@ const resolvers = {
 
 				if (existingUser) throw { message: 'This username is taken' }
 
-				const { id } = user
+				const { id } = session
 
 				await prisma.user.update({ where: { id }, data: { username } })
 

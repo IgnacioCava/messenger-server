@@ -24,6 +24,7 @@ const httpServer = http.createServer(app)
 const server = new ApolloServer({
 	typeDefs,
 	resolvers,
+	introspection: true,
 	cache: 'bounded',
 	plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
 })
@@ -41,12 +42,12 @@ app.use(
 	bodyParser.json({ limit: '50mb' }),
 	expressMiddleware(server, {
 		context: async ({ req }): Promise<GraphQLContext> => {
-			const { user } = req.headers
-			return { prisma, user: JSON.parse(user as string) }
+			const { session } = req.headers
+			return { prisma, session: JSON.parse(session as string) || '' }
 		}
 	})
 )
 
 // Modified server startup
 await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve))
-console.log(`🚀 Server ready at http://localhost:4000/`)
+console.log(`🚀 Server ready at http://localhost:4000/graphql`)
