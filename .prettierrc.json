@@ -9,5 +9,6 @@
 	"arrowParens": "always",
 	"printWidth": 200,
 	"jsxSingleQuote": true,
-	"endOfLine": "auto"
+	"endOfLine": "auto",
+	"plugins": ["prettier-plugin-organize-imports"]
 }
