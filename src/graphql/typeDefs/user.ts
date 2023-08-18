@@ -2,6 +2,9 @@ const typeDefs = `#graphql
     type User {
         id: String!
         username: String!
+        email: String!
+        emailVerified: Boolean!
+        image: String!
     }
 
     type SearchedUser {
