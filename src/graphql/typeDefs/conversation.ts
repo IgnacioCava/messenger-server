@@ -24,7 +24,11 @@ const typeDefs = `#graphql
     }
 
     type Query {
-        conversations: [Conversation!]
+        conversations: [Conversation!]!
+    }
+
+    type Subscription {
+        conversationCreated: Conversation!
     }
 `
 

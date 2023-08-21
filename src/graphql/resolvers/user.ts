@@ -10,7 +10,7 @@ const resolvers = {
 				const { session, prisma } = context
 				if (!session) throw { message: 'Not authorized' }
 				if (!username) throw { message: 'Missing username field' }
-
+				console.log(session)
 				const { username: currentUser } = session
 
 				const users = await prisma.user.findMany({
