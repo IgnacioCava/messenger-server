@@ -5,29 +5,62 @@ import typeDefs from './graphql/typeDefs/index.js'
 // npm install @apollo/server express graphql cors body-parser
 import { expressMiddleware } from '@apollo/server/express4'
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
+import { makeExecutableSchema } from '@graphql-tools/schema'
+import { PrismaClient } from '@prisma/client'
 import bodyParser from 'body-parser'
 import cors from 'cors'
-import express from 'express'
-import http from 'http'
 import * as dotenv from 'dotenv'
-import { PrismaClient } from '@prisma/client'
-import { GraphQLContext } from './graphql/util/types.js'
+import express from 'express'
+import { PubSub } from 'graphql-subscriptions'
+import { useServer } from 'graphql-ws/lib/use/ws'
+import { createServer } from 'http'
+import { WebSocketServer } from 'ws'
+import { GraphQLContext, SubscriptionContext } from './graphql/util/types.js'
 
 dotenv.config()
 
 const prisma = new PrismaClient()
+const pubsub = new PubSub()
 
 const app = express()
 
-const httpServer = http.createServer(app)
+const httpServer = createServer(app)
+
+const schema = makeExecutableSchema({ typeDefs, resolvers })
 
 const server = new ApolloServer({
-	typeDefs,
-	resolvers,
+	schema,
 	introspection: true,
 	cache: 'bounded',
-	plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
+	plugins: [
+		ApolloServerPluginDrainHttpServer({ httpServer }),
+		{
+			async serverWillStart() {
+				return {
+					async drainServer() {
+						await serverCleanup.dispose()
+					}
+				}
+			}
+		}
+	]
 })
+
+const wsServer = new WebSocketServer({
+	server: httpServer,
+	path: '/graphql/subscriptions'
+})
+
+const serverCleanup = useServer(
+	{
+		schema,
+		context: async (ctx: SubscriptionContext): Promise<GraphQLContext> => {
+			const { session } = ctx.connectionParams
+			return { session: session || null, prisma, pubsub }
+		}
+	},
+	wsServer
+)
 
 await server.start()
 
@@ -43,7 +76,7 @@ app.use(
 	expressMiddleware(server, {
 		context: async ({ req }): Promise<GraphQLContext> => {
 			const { session } = req.headers
-			return { prisma, session: JSON.parse(session as string) || '' }
+			return { prisma, session: JSON.parse(session as string) || '', pubsub }
 		}
 	})
 )

@@ -1,14 +1,27 @@
 import { Prisma, PrismaClient, User } from '@prisma/client'
 import { populatedConversation, populatedParticipant } from '../resolvers/conversation'
+import { Context } from 'graphql-ws'
+import { PubSub } from 'graphql-subscriptions'
+
+interface Session {
+	id: string
+	name?: string | null
+	email?: string | null
+	emailVerified: unknown
+	image?: string | null
+	username: string
+}
 
 export interface GraphQLContext {
-	session: {
-		name: string
-		email: string
-		id: string
-		username: string
-	}
+	session: Session
 	prisma: PrismaClient
+	pubsub: PubSub
+}
+
+export interface SubscriptionContext extends Context {
+	connectionParams: {
+		session?: Session
+	}
 }
 
 export type CreateUsernameResponse = { success: boolean } | { error: string }
