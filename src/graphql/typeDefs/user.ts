@@ -3,7 +3,6 @@ const typeDefs = `#graphql
         id: String!
         username: String!
         email: String!
-        emailVerified: Boolean!
         image: String!
     }
 

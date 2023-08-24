@@ -40,9 +40,7 @@ const resolvers = {
 				const { session, prisma, pubsub } = context
 				const { participantIds } = args
 
-				if (!session) {
-					throw { message: 'Not authorized' }
-				}
+				if (!session) throw new GraphQLError('Not authorized')
 
 				const { id: userId } = session
 
@@ -66,6 +64,35 @@ const resolvers = {
 
 				return { conversationId: conversation.id }
 			} catch (error) {
+				throw new GraphQLError(error?.message)
+			}
+		},
+		markAsRead: async (_: unknown, args: { userId: string; conversationId: string }, context: GraphQLContext): Promise<boolean> => {
+			const { session, prisma } = context
+			const { conversationId, userId } = args
+
+			if (!session) throw new GraphQLError('Not authorized')
+			console.log({ userId, conversationId })
+
+			try {
+				const participant = await prisma.conversationParticipant.findFirst({
+					where: { userId, conversationId }
+				})
+
+				if (!participant) throw new GraphQLError('Participant not found')
+
+				await prisma.conversationParticipant.update({
+					where: {
+						id: participant.id
+					},
+					data: {
+						hasSeenLatestMessage: true
+					}
+				})
+
+				return true
+			} catch (error) {
+				console.log('markAsRead error', error)
 				throw new GraphQLError(error?.message)
 			}
 		}
