@@ -87,4 +87,5 @@ model Message {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   lastMessage     Conversation? @relation(name: "lastMessage")
+  body            String        
 }

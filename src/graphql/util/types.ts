@@ -2,6 +2,7 @@ import { Prisma, PrismaClient, User } from '@prisma/client'
 import { populatedConversation, populatedParticipant } from '../resolvers/conversation'
 import { Context } from 'graphql-ws'
 import { PubSub } from 'graphql-subscriptions'
+import { populatedMessage } from '../resolvers/messages'
 
 interface Session {
 	id: string
@@ -33,3 +34,16 @@ export type SearchUsersResponse = User[]
 export type PopulatedConversation = Prisma.ConversationGetPayload<{ include: typeof populatedConversation }>
 
 export type PopulatedParticipant = Prisma.ConversationParticipantGetPayload<{ include: typeof populatedParticipant }>
+
+export interface SendMessageArguments {
+	id: string
+	conversationId: string
+	senderId: string
+	body: string
+}
+
+export interface MessageSentSubscriptionPayload {
+	messageSent: PopulatedMessage
+}
+
+export type PopulatedMessage = Prisma.MessageGetPayload<{ include: typeof populatedMessage }>

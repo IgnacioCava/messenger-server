@@ -5,10 +5,6 @@ const typeDefs = `#graphql
         conversationId: String!
     }
 
-    type Mutation {
-        createConversation(participantIds: [String]): CreateConversationResponse
-    }
-
     type Conversation {
         id: String!
         lastMessage: Message
@@ -23,8 +19,15 @@ const typeDefs = `#graphql
         hasSeenLatestMessage: Boolean!
     }
 
+    
+
     type Query {
         conversations: [Conversation!]!
+    }
+
+    type Mutation {
+        createConversation(participantIds: [String]): CreateConversationResponse
+        markAsRead(userId: String!, conversationId: String!): Boolean
     }
 
     type Subscription {
