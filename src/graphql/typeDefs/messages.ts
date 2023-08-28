@@ -4,6 +4,7 @@ const typeDefs = `#graphql
         sender: User!
         body: String!
         createdAt: Date!
+        conversationId: String!
     }
 
     type Query {
@@ -11,7 +12,7 @@ const typeDefs = `#graphql
     }
 
     type Mutation {
-        sendMessage(id: String!, conversationId: String!, senderId: String!, body: String!): Boolean
+        sendMessage(conversationId: String!, senderId: String!, body: String!): String
     }
 
     type Subscription {

@@ -4,13 +4,13 @@ import { GraphQLError } from 'graphql'
 
 const resolvers = {
 	Query: {
-		searchUsers: async (_: unknown, args: { username: string }, context: GraphQLContext): Promise<SearchUsersResponse> => {
+		searchUsers: async (_: unknown, args: { username: string; excludedIds?: string[] }, context: GraphQLContext): Promise<SearchUsersResponse> => {
 			try {
-				const { username } = args
+				const { username, excludedIds } = args
 				const { session, prisma } = context
-				if (!session) throw { message: 'Not authorized' }
-				if (!username) throw { message: 'Missing username field' }
-				console.log(session)
+				if (!session) throw new GraphQLError('Not authorized')
+				if (!username) throw new GraphQLError('Missing username field')
+
 				const { username: currentUser } = session
 
 				const users = await prisma.user.findMany({
@@ -19,7 +19,14 @@ const resolvers = {
 							contains: username,
 							not: currentUser,
 							mode: 'insensitive'
-						}
+						},
+						...(excludedIds?.length > 0 && {
+							id: {
+								not: {
+									in: excludedIds
+								}
+							}
+						})
 					}
 				})
 
@@ -33,16 +40,13 @@ const resolvers = {
 		createUsername: async (_: unknown, args: { username: string }, context: GraphQLContext): Promise<CreateUsernameResponse> => {
 			const { prisma, session } = context
 
-			if (!session) throw { message: 'Not authorized' }
+			if (!session) throw new GraphQLError('Not authorized')
 
 			try {
-				/**
-				 * Check that user is not taken
-				 */
 				const { username } = args
 				const existingUser = await prisma.user.findUnique({ where: { username } })
 
-				if (existingUser) throw { message: 'This username is taken' }
+				if (existingUser) throw new GraphQLError('This username is taken')
 
 				const { id } = session
 

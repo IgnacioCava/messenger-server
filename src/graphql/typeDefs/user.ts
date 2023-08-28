@@ -12,7 +12,7 @@ const typeDefs = `#graphql
     }
 
     type Query {
-        searchUsers(username: String): [SearchedUser!]
+        searchUsers(username: String, excludedIds: [String]): [SearchedUser!]
     }
 
     type Mutation {

@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client'
 import { withFilter } from 'graphql-subscriptions'
 import { userIsConversationParticipant } from '../util/functions.js'
 import { populatedConversation } from './conversation.js'
+import ObjectID from 'bson-objectid'
 
 const resolvers = {
 	Query: {
@@ -15,7 +16,6 @@ const resolvers = {
 			if (!session) throw new GraphQLError('Not authorized')
 
 			const { id: userId } = session
-			console.log({ conversationId })
 
 			const conversation = await prisma.conversation.findUnique({
 				where: {
@@ -46,20 +46,20 @@ const resolvers = {
 		}
 	},
 	Mutation: {
-		sendMessage: async (_: unknown, args: SendMessageArguments, context: GraphQLContext): Promise<boolean> => {
+		sendMessage: async (_: unknown, args: SendMessageArguments, context: GraphQLContext): Promise<string> => {
 			const { session, prisma, pubsub } = context
 
 			if (!session) throw new GraphQLError('Not authorized')
 
 			const { id: userId } = session
-			const { id: messageId, senderId, conversationId, body } = args
+			const { senderId, conversationId, body } = args
 
 			if (userId !== senderId) throw new GraphQLError('Not authorized')
 
 			try {
 				const newMessage = await prisma.message.create({
 					data: {
-						id: messageId,
+						id: new ObjectID().toString(),
 						senderId,
 						conversationId,
 						body
@@ -93,8 +93,8 @@ const resolvers = {
 							},
 							updateMany: {
 								where: {
-									NOT: {
-										userId: senderId
+									userId: {
+										not: senderId
 									}
 								},
 								data: {
@@ -106,26 +106,29 @@ const resolvers = {
 					include: populatedConversation
 				})
 
-				console.log({ newMessage })
 				pubsub.publish('MESSAGE_SENT', {
 					messageSent: newMessage
 				})
+				pubsub.publish('CONVERSATION_UPDATED', {
+					conversationUpdated: {
+						conversation
+					}
+				})
+				return newMessage.id
 			} catch (error) {
 				console.log('sendMessage error')
 				throw new GraphQLError(error?.message)
 			}
-			return true
 		}
 	},
 	Subscription: {
 		messageSent: {
 			subscribe: withFilter(
-				(_: unknown, args: SendMessageArguments, context: GraphQLContext) => {
+				(_: unknown, args: { conversationId: string }, context: GraphQLContext) => {
 					const { pubsub } = context
 					return pubsub.asyncIterator(['MESSAGE_SENT'])
 				},
-				(payload: MessageSentSubscriptionPayload, args: { conversationId: string }, context: GraphQLContext) => {
-					console.log(payload.messageSent.conversationId === args.conversationId)
+				(payload: MessageSentSubscriptionPayload, args: { conversationId: string }) => {
 					return payload.messageSent.conversationId === args.conversationId
 				}
 			)
@@ -134,6 +137,11 @@ const resolvers = {
 }
 
 export const populatedMessage = Prisma.validator<Prisma.MessageInclude>()({
+	conversation: {
+		select: {
+			id: true
+		}
+	},
 	sender: {
 		select: {
 			id: true,
