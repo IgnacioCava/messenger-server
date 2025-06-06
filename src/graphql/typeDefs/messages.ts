@@ -18,6 +18,14 @@ const typeDefs = `#graphql
     type Subscription {
         messageSent(conversationId: String!): Message!
     }
+
+    type Query {
+        messages(conversationId: String!): [Message!]!
+    }
+
+    type Subscription {
+        messageSent(conversationId: String!): Message!
+    }
 `
 
 export default typeDefs
