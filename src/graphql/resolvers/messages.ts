@@ -145,7 +145,8 @@ export const populatedMessage = Prisma.validator<Prisma.MessageInclude>()({
 	sender: {
 		select: {
 			id: true,
-			username: true
+			username: true,
+			image: true
 		}
 	}
 })

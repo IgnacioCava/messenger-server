@@ -193,7 +193,8 @@ export const populatedParticipant = Prisma.validator<Prisma.ConversationParticip
 	user: {
 		select: {
 			id: true,
-			username: true
+			username: true,
+			image: true
 		}
 	}
 })
@@ -207,7 +208,8 @@ export const populatedConversation = Prisma.validator<Prisma.ConversationInclude
 			sender: {
 				select: {
 					id: true,
-					username: true
+					username: true,
+					image: true
 				}
 			}
 		}

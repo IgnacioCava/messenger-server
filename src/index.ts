@@ -65,7 +65,7 @@ const serverCleanup = useServer(
 await server.start()
 
 const corsOptions: cors.CorsOptions = {
-	origin: process.env.CLIENT_ORIGIN,
+	origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
 	credentials: true
 }
 

@@ -9,6 +9,7 @@ const typeDefs = `#graphql
     type SearchedUser {
         id: String!
         username: String!
+        image: String
     }
 
     type Query {
